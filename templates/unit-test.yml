@@ -1,0 +1,32 @@
+name: Unit tests
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run real unit tests and fail if none exist
+        run: |
+          python - <<'PYTEST'
+          import sys
+          import unittest
+          suite = unittest.defaultTestLoader.discover("tests", pattern="test_*.py")
+          if suite.countTestCases() == 0:
+              sys.exit("No unit tests discovered")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() else 1)
+          PYTEST
